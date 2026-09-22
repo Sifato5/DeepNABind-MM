@@ -80,13 +80,20 @@ DeepNABind-MM/
 ├── configs/
 │   └── config.json
 │
-└── data/
-    ├── raw/
-    ├── embeddings/
-    ├── structures/
-    ├── graphs/
-    └── binding_labels/
-
+├── data/
+│   ├── raw/
+│   ├── embeddings/
+│   ├── structures/
+│   ├── graphs/
+│   └── binding_labels/
+│
+├── checkpoints/
+│
+├── examples/
+│   ├── example.fasta
+│   └── example_mutations.csv
+│
+└── results/
 ```
 
 ---
@@ -389,80 +396,23 @@ If the WT structure is reused for the mutant, the analysis should be interpreted
 
 ---
 
-## 12. Reproducibility
 
-For reproducible experiments, record:
-
-* Random seed
-* Python version
-* PyTorch version
-* PyTorch Geometric version
-* ESM-2 model/version
-* CUDA version
-* Dataset version
-* AlphaFold2 structure source
-* Binding-label source
-* Model checkpoint
-* Training hyperparameters
-
-
-
----
-
-## 13. Data Availability
-
-The repository contains the code required for dataset preparation, model training, evaluation, and inference.
-
-Large datasets and structure files should be downloaded from their original sources according to their respective licenses and documentation.
-
-The repository should provide:
-
-* Dataset preparation instructions
-* Source database information
-* Preprocessing commands
-* Expected directory structure
-* Trained-model checkpoint information
-
----
-
-## 14. Citation
+## 12. Citation
 
 If you use DeepNABind-MM in your research, please cite the associated publication:
 
-```bibtex
-@article{DeepNABindMM,
-  title   = {DeepNABind-MM: A Multimodal Deep Learning Framework
-             for Nucleic-Acid-Binding Protein Prediction},
-  author  = {Md. Sifat Ali and others},
-  journal = {...},
-  year    = {2026}
-}
-```
-
-Replace the BibTeX information with the final published citation.
+## (Citation details will be provided here once available)
 
 ---
 
-## 15. License
+## 13. Contact
 
-This project is released under the **MIT License**.
-
-See:
-
-```text
-LICENSE
-```
-
-for details.
-
----
-
-## 16. Contact
+For questions regarding the code or methodology, please contact:
 
 **Md. Sifat Ali**
-School of Computer Science and Engineering
-Central South University, China
+School of Computer Science and Engineering,
+Central South University, China.
 Email: asasifat@csu.edu.cn
 
-For questions regarding the code or methodology, please open a GitHub issue or contact the corresponding author listed in the associated publication.
+
 
