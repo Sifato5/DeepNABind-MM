@@ -313,7 +313,7 @@ Use:
 python predict_proteome.py \
     --fasta human_proteome.fasta \
     --sample_dir data/proteome_samples \
-    --checkpoint checkpoints/deepnabind_mm_best.pt \
+    --checkpoint checkpoints/best_model.pt \
     --output_dir results/proteome \
     --device cuda
 ```
@@ -368,7 +368,7 @@ python predict_mutations.py \
     --fasta human_proteome.fasta \
     --mutations mutations.csv \
     --sample_dir data/mutation_samples \
-    --checkpoint checkpoints/deepnabind_mm_best.pt \
+    --checkpoint checkpoints/best_model.pt \
     --output_dir results/mutations \
     --device cuda
 ```
