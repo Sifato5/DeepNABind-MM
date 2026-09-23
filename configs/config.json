@@ -1,0 +1,21 @@
+{
+    "model": {
+        "hidden_dim": 512,
+        "num_classes": 3,
+        "esm_dim": 2560,
+        "dropout": 0.3,
+        "temperature": 0.07
+    },
+    "training": {
+        "batch_size": 4,
+        "epochs": 100,
+        "learning_rate": 5e-5,
+        "weight_decay": 1e-2,
+        "patience": 15
+    },
+    "loss_weights": {
+        "lambda1": 1.0,
+        "lambda2": 0.3,
+        "lambda3": 0.1
+    }
+}
