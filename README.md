@@ -89,10 +89,6 @@ DeepNABind-MM/
 │
 ├── checkpoints/
 │
-├── examples/
-│   ├── example.fasta
-│   └── example_mutations.csv
-│
 └── results/
 ```
 
