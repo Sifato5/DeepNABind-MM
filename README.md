@@ -24,9 +24,8 @@ The model classifies proteins into:
 
 
 <p align="center">
-  <img src="DeepNABind-MM.pdf" >
+  <img src="DeepNABind-MM.png">
 </p>
-
 
 ---
 
