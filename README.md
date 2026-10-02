@@ -216,7 +216,7 @@ The structural preprocessing parameters should remain consistent between trainin
 
 ## 7. Binding-Site Labels
 
-Residue-level nucleic-acid binding labels should be derived from **experimentally characterized protein–nucleic-acid complexes**, such as BioLiP/BioLiP2 annotations.
+Residue-level nucleic-acid binding labels should be derived from **experimentally characterized protein–nucleic-acid complexes**, such as BioLiP2/BioLiP3 annotations.
 
 Recommended label format:
 
@@ -330,16 +330,6 @@ DBP probability
 predicted class
 ```
 
-Residue-level predictions include:
-
-```text
-protein_id
-position
-residue
-binding_probability
-predicted_binding
-```
-
 ---
 
 ## 11. Mutation Analysis
@@ -360,7 +350,7 @@ Run:
 ```bash
 python predict_mutations.py \
     --fasta human_proteome.fasta \
-    --mutations mutations.csv \
+    --ClinVar_UniProt_VALIDATED_only.tsv \
     --sample_dir data/mutation_samples \
     --checkpoint checkpoints/best_model.pt \
     --output_dir results/mutations \
@@ -374,15 +364,9 @@ The output reports:
 * WT class probabilities
 * Mutant class probabilities
 * Δ class probabilities
-* WT binding probability at the mutation site
-* Mutant binding probability at the mutation site
+* WT binding probability
+* Mutant binding probability
 * Δ binding probability
-
-### Important
-
-For structural mutation analysis, the mutant should ideally have a **mutant-specific predicted structure**.
-
-If the WT structure is reused for the mutant, the analysis should be interpreted as an approximation rather than a full structural mutation analysis.
 
 ---
 
