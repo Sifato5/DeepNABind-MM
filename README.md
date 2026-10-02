@@ -22,31 +22,11 @@ The model classifies proteins into:
 
 ## 1. Framework
 
-```text
-Protein Sequence
-       │
-       ├── ESM-2
-       │      │
-       │      └── Sequence Representation
-       │
-       └── AlphaFold2 Structure
-              │
-              ├── Atomic Graph
-              ├── Residue Graph
-              └── Secondary-Structure/Motif Graph
-                       │
-                       ▼
-              Multimodal Deep Learning
-                       │
-             ┌─────────┴─────────┐
-             │                   │
-             ▼                   ▼
-      Protein Classification   Binding-Site
-             │                  Prediction
-             ▼                   │
-   non-NABP / RBP / DBP         ▼
-                         Residue-level scores
-```
+
+<p align="center">
+  <img src="DeepNABind-MM.pdf" >
+</p>
+
 
 ---
 
