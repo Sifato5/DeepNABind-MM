@@ -158,12 +158,6 @@ python embeddings.py
 and:
 
 ```bash
-python final_data.py
-```
-
-For large datasets, use:
-
-```bash
 python final_data_sharded.py
 ```
 
