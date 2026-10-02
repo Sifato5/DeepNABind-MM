@@ -36,10 +36,8 @@ DeepNABind-MM/
 │
 ├── README.md
 ├── LICENSE
-├── setup.py
 ├── requirements.txt
 ├── environment.yml
-├── .gitignore
 │
 ├── src/
 │   ├── model.py
@@ -48,7 +46,6 @@ DeepNABind-MM/
 │   ├── evaluate.py
 │   │
 │   ├── data_utils.py
-│   ├── final_data.py
 │   ├── final_data_sharded.py
 │   ├── embeddings.py
 │   │
