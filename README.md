@@ -22,31 +22,10 @@ The model classifies proteins into:
 
 ## 1. Framework
 
-```text
-Protein Sequence
-       │
-       ├── ESM-2
-       │      │
-       │      └── Sequence Representation
-       │
-       └── AlphaFold2 Structure
-              │
-              ├── Atomic Graph
-              ├── Residue Graph
-              └── Secondary-Structure/Motif Graph
-                       │
-                       ▼
-              Multimodal Deep Learning
-                       │
-             ┌─────────┴─────────┐
-             │                   │
-             ▼                   ▼
-      Protein Classification   Binding-Site
-             │                  Prediction
-             ▼                   │
-   non-NABP / RBP / DBP         ▼
-                         Residue-level scores
-```
+
+<p align="center">
+  <img src="DeepNABind-MM.png">
+</p>
 
 ---
 
@@ -57,10 +36,8 @@ DeepNABind-MM/
 │
 ├── README.md
 ├── LICENSE
-├── setup.py
 ├── requirements.txt
 ├── environment.yml
-├── .gitignore
 │
 ├── src/
 │   ├── model.py
@@ -69,7 +46,6 @@ DeepNABind-MM/
 │   ├── evaluate.py
 │   │
 │   ├── data_utils.py
-│   ├── final_data.py
 │   ├── final_data_sharded.py
 │   ├── embeddings.py
 │   │
@@ -88,10 +64,6 @@ DeepNABind-MM/
 │   └── binding_labels/
 │
 ├── checkpoints/
-│
-├── examples/
-│   ├── example.fasta
-│   └── example_mutations.csv
 │
 └── results/
 ```
@@ -162,12 +134,6 @@ python embeddings.py
 and:
 
 ```bash
-python final_data.py
-```
-
-For large datasets, use:
-
-```bash
 python final_data_sharded.py
 ```
 
@@ -226,7 +192,7 @@ The structural preprocessing parameters should remain consistent between trainin
 
 ## 7. Binding-Site Labels
 
-Residue-level nucleic-acid binding labels should be derived from **experimentally characterized protein–nucleic-acid complexes**, such as BioLiP/BioLiP2 annotations.
+Residue-level nucleic-acid binding labels should be derived from **experimentally characterized protein–nucleic-acid complexes**, such as BioLiP2/BioLiP3 annotations.
 
 Recommended label format:
 
@@ -317,7 +283,7 @@ Use:
 python predict_proteome.py \
     --fasta human_proteome.fasta \
     --sample_dir data/proteome_samples \
-    --checkpoint checkpoints/deepnabind_mm_best.pt \
+    --checkpoint checkpoints/best_model.pt \
     --output_dir results/proteome \
     --device cuda
 ```
@@ -340,16 +306,6 @@ DBP probability
 predicted class
 ```
 
-Residue-level predictions include:
-
-```text
-protein_id
-position
-residue
-binding_probability
-predicted_binding
-```
-
 ---
 
 ## 11. Mutation Analysis
@@ -370,9 +326,9 @@ Run:
 ```bash
 python predict_mutations.py \
     --fasta human_proteome.fasta \
-    --mutations mutations.csv \
+    --ClinVar_UniProt_VALIDATED_only.tsv \
     --sample_dir data/mutation_samples \
-    --checkpoint checkpoints/deepnabind_mm_best.pt \
+    --checkpoint checkpoints/best_model.pt \
     --output_dir results/mutations \
     --device cuda
 ```
@@ -384,15 +340,9 @@ The output reports:
 * WT class probabilities
 * Mutant class probabilities
 * Δ class probabilities
-* WT binding probability at the mutation site
-* Mutant binding probability at the mutation site
+* WT binding probability
+* Mutant binding probability
 * Δ binding probability
-
-### Important
-
-For structural mutation analysis, the mutant should ideally have a **mutant-specific predicted structure**.
-
-If the WT structure is reused for the mutant, the analysis should be interpreted as an approximation rather than a full structural mutation analysis.
 
 ---
 
