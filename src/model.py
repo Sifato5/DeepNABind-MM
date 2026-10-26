@@ -280,70 +280,135 @@ class BindingSiteAwareSeqModel(nn.Module):
         
         return global_seq_feats, x, binding_logits, binding_probs
 
+
 class DynamicRoutingFusion(nn.Module):
-   
-    def __init__(self, feature_dim: int = 512, num_iterations: int = 3, num_output_capsules: int = 32):
+    def __init__(
+        self,
+        feature_dim: int = 512,
+        num_iterations: int = 3,
+        num_output_capsules: int = 32
+    ):
         super().__init__()
-        
+
         self.feature_dim = feature_dim
         self.num_iterations = num_iterations
         self.num_output_capsules = num_output_capsules
-        
+
         self.seq_transform = nn.Linear(feature_dim, feature_dim)
         self.struct_transform = nn.Linear(feature_dim, feature_dim)
-        
-        self.W_seq = nn.Linear(feature_dim, feature_dim * num_output_capsules)
-        self.W_struct = nn.Linear(feature_dim, feature_dim * num_output_capsules)
-        
-        self.cross_attn_seq = nn.MultiheadAttention(feature_dim, num_heads=8, batch_first=True)
-        self.cross_attn_struct = nn.MultiheadAttention(feature_dim, num_heads=8, batch_first=True)
-        
+
+        self.W_seq = nn.Linear(
+            feature_dim,
+            feature_dim * num_output_capsules
+        )
+
+        self.W_struct = nn.Linear(
+            feature_dim,
+            feature_dim * num_output_capsules
+        )
+
+        self.cross_attn_seq = nn.MultiheadAttention(
+            feature_dim,
+            num_heads=8,
+            batch_first=True
+        )
+
+        self.cross_attn_struct = nn.MultiheadAttention(
+            feature_dim,
+            num_heads=8,
+            batch_first=True
+        )
+
         self.layer_norm_seq = nn.LayerNorm(feature_dim)
         self.layer_norm_struct = nn.LayerNorm(feature_dim)
-        
-    def forward(self, seq_feats: torch.Tensor, struct_feats: torch.Tensor) -> torch.Tensor:
-        
-        batch_size = seq_feats.shape[0]
-        
-        seq_expanded = seq_feats.unsqueeze(1)  
-        struct_expanded = struct_feats.unsqueeze(1)  
-        
-        seq_attended, _ = self.cross_attn_seq(seq_expanded, struct_expanded, struct_expanded)
-        seq_feats = self.layer_norm_seq(seq_feats + seq_attended.squeeze(1))
-        
-        struct_attended, _ = self.cross_attn_struct(struct_expanded, seq_expanded, seq_expanded)
-        struct_feats = self.layer_norm_struct(struct_feats + struct_attended.squeeze(1))
-        
+
+    def forward(
+        self,
+        seq_feats: torch.Tensor,
+        struct_feats: torch.Tensor
+    ) -> torch.Tensor:
+
+        B, D = seq_feats.shape
+
+        assert struct_feats.shape == (B, D)
+        assert D == self.feature_dim
+
+        seq_token = seq_feats.unsqueeze(1)       
+        struct_token = struct_feats.unsqueeze(1) 
+
+        seq_attended, _ = self.cross_attn_seq(
+            query=seq_token,
+            key=struct_token,
+            value=struct_token
+        )
+
+        struct_attended, _ = self.cross_attn_struct(
+            query=struct_token,
+            key=seq_token,
+            value=seq_token
+        )
+
+        seq_feats = self.layer_norm_seq(
+            seq_feats + seq_attended.squeeze(1)
+        )
+
+        struct_feats = self.layer_norm_struct(
+            struct_feats + struct_attended.squeeze(1)
+        )
+
         seq_proj = self.seq_transform(seq_feats)
         struct_proj = self.struct_transform(struct_feats)
-        
-        seq_capsules = self.W_seq(seq_proj).view(batch_size, self.num_output_capsules, self.feature_dim)
-        struct_capsules = self.W_struct(struct_proj).view(batch_size, self.num_output_capsules, self.feature_dim)
-        
+
+        C = self.num_output_capsules
+
+        seq_capsules = self.W_seq(seq_proj).reshape(B, C, D)
+        struct_capsules = self.W_struct(struct_proj).reshape(B, C, D)
+
         primary_capsules = seq_capsules + struct_capsules
-        
-        b = torch.zeros(batch_size, self.num_output_capsules, self.num_output_capsules, device=seq_feats.device)
-        
+
+        b = primary_capsules.new_zeros(B, C, C)
+
         for iteration in range(self.num_iterations):
-           
             c = F.softmax(b, dim=-1)
-            
-            s = torch.einsum('bij,bjkd->bikd', c, primary_capsules.unsqueeze(1))
-            
+
+            s = torch.einsum(
+                'bij,bid->bjd',
+                c,
+                primary_capsules
+            )
+
             v = self._squash(s)
-            
+
             if iteration < self.num_iterations - 1:
-                b = b + torch.einsum('bikd,bjkd->bij', s, primary_capsules.unsqueeze(1))
-        
+
+                agreement = torch.einsum(
+                    'bid,bjd->bij',
+                    primary_capsules,
+                    v
+                )
+
+                b = b + agreement
+
         fused_feats = v.mean(dim=1)  
-        
+
         return fused_feats
-    
-    def _squash(self, x: torch.Tensor) -> torch.Tensor:
-        
-        norm = torch.norm(x, dim=-1, keepdim=True)
-        scale = norm / (1 + norm**2)
+
+    @staticmethod
+    def _squash(
+        x: torch.Tensor,
+        eps: float = 1e-8
+    ) -> torch.Tensor:
+
+        norm = torch.linalg.vector_norm(
+            x,
+            dim=-1,
+            keepdim=True
+        )
+
+        scale = norm / (1.0 + norm.square())
+
         return scale * x
+
 
 class DeepNABindMM(nn.Module):
    
@@ -476,18 +541,52 @@ class DeepNABindMM(nn.Module):
         else:
             losses['bind'] = torch.tensor(0.0, device=logits.device)
         
-        seq_feats_norm = F.normalize(seq_feats, dim=-1)
-        struct_feats_norm = F.normalize(struct_feats, dim=-1)
-        
-        similarity = torch.matmul(seq_feats_norm, struct_feats_norm.T) / self.temperature
-        eye_mask = torch.eye(seq_feats.shape[0], device=logits.device)
-        
-        pos_sim = similarity * eye_mask
-        neg_sim = similarity * (1 - eye_mask)
-        
-        exp_pos = torch.exp(pos_sim.sum(dim=1))
-        exp_neg = torch.exp(neg_sim).sum(dim=1)
-        losses['contrast'] = -torch.log(exp_pos / (exp_pos + exp_neg + 1e-8)).mean()
+        seq_feats_norm = F.normalize(
+            seq_feats,
+            p=2,
+            dim=-1
+        )
+
+        struct_feats_norm = F.normalize(
+            struct_feats,
+            p=2,
+            dim=-1
+        )
+
+        B = seq_feats_norm.shape[0]
+
+        if B > 1:
+
+            similarity = torch.matmul(
+                seq_feats_norm,
+                struct_feats_norm.transpose(0, 1)
+            ) / self.temperature
+
+            targets = torch.arange(
+                B,
+                device=similarity.device
+            )
+
+            loss_s2t = F.cross_entropy(
+                similarity,
+                targets
+            )
+
+            loss_t2s = F.cross_entropy(
+                similarity.transpose(0, 1),
+                targets
+            )
+
+            losses['contrast'] = 0.5 * (
+                loss_s2t + loss_t2s
+            )
+
+        else:
+
+            losses['contrast'] = (
+                seq_feats_norm.sum()
+                + struct_feats_norm.sum()
+            ) * 0.0
         
         losses['total'] = lambda1 * losses['cls'] + lambda2 * losses['bind'] + lambda3 * losses['contrast']
         
